@@ -3,18 +3,60 @@ import { db } from "@/lib/db";
 import { NextResponse } from "next/server";
 
 export async function DELETE(
-    req:Request,
-    {params}: {params:{memberId:string}}
-    try{
+    req: Request,
+    { params }: { params: { memberId: string } }
+) {
+    try {
         const profile = await currentProfile()
-        if(!profile){
+        const {searchParams} = new URL(req.url)
+
+        const serverId = searchParams.get("serverId")
+
+        if (!profile) {
             return new NextResponse("Unauthorized")
         }
 
-    } catch(error){
-        console.log("[MEMBER_ID_DELETE]",error)
+        if(!serverId){
+            return new NextResponse("Server Id missing", {status: 400})
+        }
+
+        if(!params.memberId){
+            return new NextResponse("Member Id missing", {status: 400})
+        }
+
+        const server=  await db.server.update({
+            where:{
+                id:serverId,
+                profileId: profile.id,
+            },
+            data:{
+                members:{
+                    deleteMany:{
+                        id: params.memberId,
+                        profileId:{
+                            not: profile.id
+                        }
+                    }
+                }
+            },
+            include:{
+                members:{
+                    include:{
+                        profile: true,
+                    },
+                    orderBy:{
+                        role:"asc"
+                    }
+                }
+            }
+        })
+
+        return NextResponse.json(server)
+
+    } catch (error) {
+        console.log("[MEMBER_ID_DELETE]", error)
     }
-)
+}
 
 export async function PATCH(
     req: Request,
@@ -52,19 +94,19 @@ export async function PATCH(
                                 not: profile.id
                             }
                         },
-                    data: {
-                        role
+                        data: {
+                            role
+                        }
                     }
                 }
-            }
             },
-            include:{
-                members:{
-                    include:{
+            include: {
+                members: {
+                    include: {
                         profile: true
                     },
-                    orderBy:{
-                        role:"asc"
+                    orderBy: {
+                        role: "asc"
                     }
                 }
             }
