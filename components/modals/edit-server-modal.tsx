@@ -33,7 +33,7 @@ const formSchema = z.object({
     message: "Severname is required.",
   }),
   imageUrl: z.string().min(1, {
-    message: "Sever name is required",
+    message: "Server name is required",
   }),
 });
 
@@ -41,7 +41,7 @@ export const EditServerModal = () => {
   const { isOpen, onClose, type, data } = useModal();
   const router = useRouter();
 
-  const isModalOpen = isOpen && type === "createServer";
+  const isModalOpen = isOpen && type === "editServer";
   const {server}= data
   const form = useForm({
     resolver: zodResolver(formSchema),
